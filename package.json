@@ -1,0 +1,22 @@
+{
+  "name": "react-native-dragable-grid",
+  "keywords": [
+    "drag-drop",
+    "sortable",
+    "grid"
+  ],
+  "version": "0.0.1",
+  "description": "Drag-and-drop sortable grid view with cancelable function for React Native.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yxyhail/react-native-dragable-grid.git"
+  },
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "lodash": "^4.17.20"
+  }
+}
