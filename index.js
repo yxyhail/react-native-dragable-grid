@@ -220,11 +220,7 @@ class SortableGrid extends Component {
     return new Promise((resolve, reject) => {
       Animated.timing(
         this.state.deleteBlockOpacity,
-        {
-          toValue: 0,
-          duration: 2 * this.activeBlockCenteringDuration,
-          useNativeDriver: false
-        }
+        { toValue: 0, duration: 2 * this.activeBlockCenteringDuration, useNativeDriver: false }
       ).start(resolve)
     })
   }
@@ -459,7 +455,7 @@ class SortableGrid extends Component {
       transform: [{
         rotate: this.state.startDragWiggle.interpolate({
           inputRange: [0, 360],
-          outputRange: ['0 deg', '360 deg']
+          outputRange: ['0 deg', '360 deg'],
         })
       }]
     }
@@ -530,7 +526,7 @@ class SortableGrid extends Component {
   }
 
   _getItemWrapperStyle = (key) => [
-    { flex: 1 },
+    { flex: 1, justifyContent: 'center', alignItems: 'center', },
     this.state.activeBlock == key
     && this.state.deleteModeOn
     && this._getBlock(key).origin
@@ -563,7 +559,9 @@ class SortableGrid extends Component {
     {
       width: this.state.blockWidth,
       height: this.state.blockWidth,
-      justifyContent: 'center'
+      justifyContent: 'center',
+      alignItems: 'center',
+      // backgroundColor: key == 2 ? 'yellow' : '',
     },
     this._blockPositionsSet() && (this.initialDragDone || this.state.deleteModeOn) &&
     {
@@ -624,7 +622,7 @@ const styles = StyleSheet.create(
     },
     itemImageContainer: {
       flex: 1,
-      justifyContent: 'center'
+      justifyContent: 'center',
     }
   })
 

@@ -6,7 +6,7 @@
     "grid"
   ],
   "version": "0.0.1",
-  "description": "Drag-and-drop sortable grid view with cancelable function for React Native.",
+  "description": "Drag-and-drop sortable grid view with cancel callback function for React Native.",
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {},
