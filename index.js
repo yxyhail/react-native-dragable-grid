@@ -599,6 +599,7 @@ class SortableGrid extends Component {
             onPress={this.handleTap(item.props)}
             itemWrapperStyle={this._getItemWrapperStyle(key)}
             deletionView={this._getDeletionView(key)}
+            inactive={item.props.inactive}
           >
             {item}
           </Block>
