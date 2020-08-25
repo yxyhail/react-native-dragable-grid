@@ -99,8 +99,8 @@ interface SortableGridProps {
     onDragStart?(item: OrderedItem): void;
 
     /**
-    * Function that is called when started dragging but no movement, then released finger.
-    */
+     * Function that is called when started dragging but no movement, then released finger.
+     */
     onDragCancel?(item: OrderedItem): void
 
     /**
