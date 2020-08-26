@@ -473,17 +473,18 @@ class DragableGrid extends Component {
           this.state.startDragAnimation.setValue(20)
           Animated.spring(this.state.startDragAnimation, {
             toValue: 0,
-            velocity: 2000,
-            tension: 2000,
+            velocity: 1000,
+            tension: 500,
             friction: 5,
             useNativeDriver: false
           }).start()
+          break
         case DRAG_ANIMATION.SCALE:
         default:
           Animated.timing(
             this.state.startDragAnimation,
             {
-              toValue: 100, duration: 200,
+              toValue: 100, duration: 100,
               useNativeDriver: false
             },
           ).start(() => {
@@ -495,6 +496,7 @@ class DragableGrid extends Component {
               }
             ).start()
           })
+          break
       }
     }
   }
