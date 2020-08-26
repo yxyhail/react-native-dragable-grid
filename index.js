@@ -12,9 +12,9 @@ import _ from 'lodash'
 
 // Default values
 const ITEMS_PER_ROW = 4
-const DRAG_ACTIVATION_TRESHOLD = 200 // Milliseconds
-const BLOCK_TRANSITION_DURATION = 300 // Milliseconds
-const ACTIVE_BLOCK_CENTERING_DURATION = 200 // Milliseconds
+const DRAG_ACTIVATION_TRESHOLD = 100 // Milliseconds
+const BLOCK_TRANSITION_DURATION = 150 // Milliseconds
+const ACTIVE_BLOCK_CENTERING_DURATION = 150 // Milliseconds
 const DOUBLETAP_TRESHOLD = 150 // Milliseconds
 const NULL_FN = () => { }
 const DRAG_ANIMATION = {
