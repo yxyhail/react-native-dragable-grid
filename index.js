@@ -11,7 +11,7 @@ import {
 import _ from 'lodash'
 
 // Default values
-const ITEMS_PER_ROW = 4
+const ITEMS_PER_ROW = 3
 const DRAG_ACTIVATION_TRESHOLD = 100 // Milliseconds
 const BLOCK_TRANSITION_DURATION = 150 // Milliseconds
 const ACTIVE_BLOCK_CENTERING_DURATION = 150 // Milliseconds
@@ -72,10 +72,12 @@ class DragableGrid extends Component {
     this.onDragCancel = NULL_FN
     this.onDragStart = NULL_FN
     this.onDeleteItem = NULL_FN
+    // this.renderItem = NULL_FN
     this.dragStartAnimation = null
     this.isStartDrag = false
     this.hasChoke = false
     this.defaultAnimation = DRAG_ANIMATION.SCALE
+    // this.data = []
 
     this.rows = null
     this.dragPosition = null
