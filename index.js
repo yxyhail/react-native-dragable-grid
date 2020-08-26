@@ -43,7 +43,7 @@ class Block extends Component {
             this.props.onDragCancel && this.props.onDragCancel()
           }
         }}
-        onLongPress={() => this.props.inactive || this.props.onLongPress()}
+        onLongPress={() => this.props.inactive || this.props.unmoved || this.props.onLongPress()}
         onPress={() => this.props.inactive || this.props.onPress()}>
 
         <View style={styles.itemImageContainer}>
@@ -91,6 +91,7 @@ class DragableGrid extends Component {
     this.items = []
     this.initialLayoutDone = false
     this.initialDragDone = false
+    this.unmovedSet = new Set()
 
     this.tapTimer = null
     this.tapIgnore = false
@@ -185,7 +186,7 @@ class DragableGrid extends Component {
           closestDistance = distance
         }
       })
-      if (closest !== this.state.activeBlock) {
+      if (closest !== this.state.activeBlock && !this.unmovedSet.has(closest)) {
         Animated.timing(
           this._getBlock(closest).currentPosition,
           {
@@ -354,10 +355,12 @@ class DragableGrid extends Component {
   }
 
   activateDrag = (key) => () => {
-    this.panCapture = true
-    this.onDragStart(this.itemOrder[key])
-    this.setState({ activeBlock: key })
-    this._defaultDragActivationWiggle()
+    if (!this.unmovedSet.has(key)) {
+      this.panCapture = true
+      this.onDragStart(this.itemOrder[key])
+      this.setState({ activeBlock: key })
+      this._defaultDragActivationWiggle()
+    }
   }
 
   handleTap = ({ onTap = NULL_FN, onDoubleTap = NULL_FN }) => () => {
@@ -381,13 +384,11 @@ class DragableGrid extends Component {
 
       if (foundKey) {
         this.items[foundKey] = item;
-      }
-      else {
+      } else {
         this.itemOrder.push({ key: item.key, ref: item.ref, order: this.items.length });
         if (!this.initialLayoutDone) {
           this.items.push(item)
-        }
-        else {
+        } else {
           let blockPositions = this.state.blockPositions
           let blockPositionsSetCount = ++this.state.blockPositionsSetCount
           let thisPosition = this.getNextBlockCoordinates()
@@ -662,39 +663,48 @@ class DragableGrid extends Component {
     return this.isStartDrag ? 'YES' : 'NO'
   }
 
-  render = () =>
-    <Animated.View
-      style={this._getGridStyle()}
-      onLayout={this.assessGridSize}
-    >
-      {this.state.gridLayout &&
-        this.items.map((item, key) =>
-          <Block
-            key={key}
-            style={this._getBlockStyle(key)}
-            onLayout={this.saveBlockPositions(key)}
-            isStartDrag={this._isStartDrag}
-            panHandlers={this._panResponder.panHandlers}
-            onDragCancel={() => {
-              this.onDragCancel(this.itemOrder[key])
-              if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
-                Animated.timing(
-                  this.state.startDragAnimation,
-                  { toValue: 0, duration: 200, useNativeDriver: false }
-                ).start()
-              }
-            }}
-            delayLongPress={this.dragActivationTreshold}
-            onLongPress={this.activateDrag(key)}
-            onPress={this.handleTap(item.props)}
-            itemWrapperStyle={this._getItemWrapperStyle(key)}
-            deletionView={this._getDeletionView(key)}
-            inactive={item.props.inactive}
-          >
-            {item}
-          </Block>
-        )}
-    </Animated.View>
+  render = () => {
+    this.unmovedSet.clear()
+    return (
+      <Animated.View
+        style={this._getGridStyle()}
+        onLayout={this.assessGridSize}
+      >
+        {this.state.gridLayout &&
+          this.items.map((item, key) => {
+            if (item.props.unmoved) {
+              this.unmovedSet.add(key)
+            }
+            return <Block
+              key={key}
+              style={this._getBlockStyle(key)}
+              onLayout={this.saveBlockPositions(key)}
+              isStartDrag={this._isStartDrag}
+              panHandlers={this._panResponder.panHandlers}
+              onDragCancel={() => {
+                this.onDragCancel(this.itemOrder[key])
+                if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
+                  Animated.timing(
+                    this.state.startDragAnimation,
+                    { toValue: 0, duration: 200, useNativeDriver: false }
+                  ).start()
+                }
+              }}
+              delayLongPress={this.dragActivationTreshold}
+              onLongPress={this.activateDrag(key)}
+              onPress={this.handleTap(item.props)}
+              itemWrapperStyle={this._getItemWrapperStyle(key)}
+              deletionView={this._getDeletionView(key)}
+              inactive={item.props.inactive}
+              unmoved={item.props.unmoved}
+            >
+              {item}
+            </Block>
+          })}
+      </Animated.View>
+    )
+  }
+
 }
 
 const styles = StyleSheet.create(
