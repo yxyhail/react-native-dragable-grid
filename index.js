@@ -6,10 +6,13 @@ import {
   PanResponder,
   Image,
   View,
-  ScrollView
+  Dimensions,
+  ScrollView,
 } from 'react-native'
 
 import _ from 'lodash'
+
+const { width, height } = Dimensions.get('window');
 
 // Default values
 const ITEMS_PER_ROW = 3
@@ -79,6 +82,7 @@ class DragableGrid extends Component {
     this.isStartDrag = false
     this.hasChoke = false
     this.defaultAnimation = DRAG_ANIMATION.SCALE
+    this.canScroll = false
     // this.data = []
 
     this.rows = null
@@ -115,7 +119,7 @@ class DragableGrid extends Component {
       deleteBlock: null,
       deleteBlockOpacity: new Animated.Value(1),
       deletedItems: [],
-      scrollable: true
+      scrollable: false
     }
   }
 
@@ -218,13 +222,16 @@ class DragableGrid extends Component {
   onReleaseBlock = (evt, gestureState) => {
     this.isStartDrag = false
     this.returnBlockToOriginalPosition()
-    if (this.state.deleteModeOn && this.state.deletionSwipePercent == 100)
+    if (this.state.deleteModeOn && this.state.deletionSwipePercent == 100){
       this.deleteBlock()
-    else
+    } else{
       this.afterDragRelease()
-    this.setState({
-      scrollable: true
-    })
+    }
+    if(this.state.scrollable != this.canScroll){
+      this.setState({
+        scrollable: this.canScroll
+      })
+    }
   }
 
   deleteBlock = () => {
@@ -293,7 +300,7 @@ class DragableGrid extends Component {
   }
 
   assessGridSize = ({ nativeEvent }) => {
-    console.log("Calculating grid size");
+    console.log("Calculating grid size:", nativeEvent.layout.y + nativeEvent.layout.height);
     if (this.props.itemWidth && this.props.itemWidth < nativeEvent.layout.width) {
       this.itemsPerRow = Math.floor(nativeEvent.layout.width / this.props.itemWidth)
       this.blockWidth = nativeEvent.layout.width / this.itemsPerRow
@@ -310,6 +317,28 @@ class DragableGrid extends Component {
         blockHeight: this.blockHeight
       })
     }
+    // this.refs.animView.measureInWindow((x, y, width, height) => {
+    //   console.log('1x=', x);//相对父视图位置x
+    //   console.log('1y=', y);//相对父视图位置y
+    //   console.log('1width=', width);//组件宽度
+    //   console.log('1height=', height);//组件高度
+    //   // console.log('pageX=', pageX);//绝对位置x
+    //   // console.log('pageY=', pageY);//绝对位置y
+    // })
+
+    this.refs.animView.measure((x, y, width, h, pageX, pageY) => {
+      console.log('1x=', x);//相对父视图位置x
+      console.log('1y=', y);//相对父视图位置y
+      console.log('1width=', width);//组件宽度
+      console.log('1height=', h);//组件高度
+      console.log('pageX=', pageX);//绝对位置x
+      console.log('pageY=', pageY);//绝对位置y
+      console.log('whteisefoijso:' + (pageY + nativeEvent.layout.height) + ' screenH:' + height)
+      this.canScroll = pageY + nativeEvent.layout.height >= height
+      this.setState({
+        scrollable: this.canScroll
+      })
+    })
   }
 
   reAssessGridRows = () => {
@@ -338,6 +367,8 @@ class DragableGrid extends Component {
         this.initialLayoutDone = true
       }
     }
+    console.log('height:' + height)
+    console.log('nativeEvent.layout.y:' + (nativeEvent.layout.y + this.blockHeight))
   }
 
   getNextBlockCoordinates = () => {
@@ -678,10 +709,12 @@ class DragableGrid extends Component {
     this.unmovedSet.clear()
     return (
       <ScrollView
+        overScrollMode='never'
         showsVerticalScrollIndicator={false}
         scrollEnabled={this.state.scrollable}
       >
         <Animated.View
+          ref="animView"
           style={this._getGridStyle()}
           onLayout={this.assessGridSize}
         >
