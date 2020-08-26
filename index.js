@@ -69,6 +69,7 @@ class SortableGrid extends Component {
     this.onDeleteItem = NULL_FN
     this.dragStartAnimation = null
     this.isStartDrag = false
+    this.hasChoke = false
 
     this.rows = null
     this.dragPosition = null
@@ -139,13 +140,15 @@ class SortableGrid extends Component {
       if (this.state.deleteModeOn) return this.deleteModeMove({ x: moveX, y: moveY })
 
       if (dx != 0 || dy != 0) this.initialDragDone = true
+      let dragPosition = { x: moveX, y: moveY }
+      if (this.hasChoke) {
+        let yChokeAmount = Math.max(0, (this.activeBlockOffset.y + moveY) - (this.state.gridLayout.height - this.blockWidth))
+        let xChokeAmount = Math.max(0, (this.activeBlockOffset.x + moveX) - (this.state.gridLayout.width - this.blockWidth))
+        let yMinChokeAmount = Math.min(0, this.activeBlockOffset.y + moveY)
+        let xMinChokeAmount = Math.min(0, this.activeBlockOffset.x + moveX)
+        dragPosition = { x: moveX - xChokeAmount - xMinChokeAmount, y: moveY - yChokeAmount - yMinChokeAmount }
+      }
 
-      let yChokeAmount = Math.max(0, (this.activeBlockOffset.y + moveY) - (this.state.gridLayout.height - this.blockWidth))
-      let xChokeAmount = Math.max(0, (this.activeBlockOffset.x + moveX) - (this.state.gridLayout.width - this.blockWidth))
-      let yMinChokeAmount = Math.min(0, this.activeBlockOffset.y + moveY)
-      let xMinChokeAmount = Math.min(0, this.activeBlockOffset.x + moveX)
-
-      let dragPosition = { x: moveX - xChokeAmount - xMinChokeAmount, y: moveY - yChokeAmount - yMinChokeAmount }
       this.dragPosition = dragPosition
       let originalPosition = this._getActiveBlock().origin
       let distanceToOrigin = this._getDistanceTo(originalPosition)
@@ -585,6 +588,7 @@ class SortableGrid extends Component {
       style={this._getGridStyle()}
       onLayout={this.assessGridSize}
     >
+      {/* <View style={{ bottom: 10, height: 100, width: 100, backgroundColor: 'blue' }}></View> */}
       {this.state.gridLayout &&
         this.items.map((item, key) =>
           <Block
@@ -604,6 +608,7 @@ class SortableGrid extends Component {
             {item}
           </Block>
         )}
+      {/* <View style={{ bottom: 10, height: 100, width: 100, backgroundColor: 'blue' }}></View> */}
     </Animated.View>
 }
 

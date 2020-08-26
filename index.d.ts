@@ -2,12 +2,12 @@
 // Project: https://github.com/yxyhail/react-native-dragable-grid
 // Definitions by: Jacob Froman <https://github.com/j-fro>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 2.8
+// TypeScript Version: 0.0.1
 
 import * as React from 'react';
 import { StyleProp, ViewStyle, Animated } from 'react-native';
 
-interface SortableGridItemProps {
+interface DragableGridItemProps {
     key: string;
 
     /**
@@ -31,11 +31,11 @@ interface SortableGridItemProps {
     inactive?: boolean;
 }
 
-type SortableGridItem = React.ReactElement<SortableGridItemProps>;
+type DragableGridItem = React.ReactElement<DragableGridItemProps>;
 
 interface OrderedItem {
     key: string;
-    ref: SortableGridItem | null;
+    ref: DragableGridItem | null;
     order: number;
 }
 
@@ -43,9 +43,9 @@ export interface ItemOrder {
     itemOrder: ReadonlyArray<OrderedItem>;
 }
 
-interface SortableGridProps {
+interface DragableGridProps {
     /**
-     * Custom styles to override or complement the sortableGrid native style.
+     * Custom styles to override or complement the DragableGrid native style.
      */
     style?: StyleProp<ViewStyle>;
 
@@ -92,6 +92,13 @@ interface SortableGridProps {
     doubleTapTreshold?: number;
 
     /**
+     * Whether there is a moving boundary. The defult value is false, which you can 
+     * drag the items everywhere on the screen, if set to true, you can only drag the 
+     * items in the drageable grid view
+     */
+    hasChoke?: boolean;
+
+    /**
      * Function that is called when the dragging starts. This can be used to
      * lock other touch responders from listening to the touch such as
      * ScrollViews and Swipers.
@@ -124,19 +131,19 @@ interface SortableGridProps {
     };
 
     /**
-     * Items to be rendered in the SortableGrid
+     * Items to be rendered in the DragableGrid
      */
-    children?: ReadonlyArray<SortableGridItem>;
+    children?: ReadonlyArray<DragableGridItem>;
 }
 
-interface SortableGridStatic extends React.ClassicComponentClass<SortableGridProps> {
+interface DragableGridStatic extends React.ClassicComponentClass<DragableGridProps> {
     /**
      * Calling this will toggle item deletion mode on/off.
      */
     toggleDeleteMode(): { deleteModeOn: boolean };
 }
 
-declare var SortableGrid: SortableGridStatic;
-type SortableGrid = SortableGridStatic;
+declare var DragableGrid: DragableGridStatic;
+type DragableGrid = DragableGridStatic;
 
-export default SortableGrid;
+export default DragableGrid;
