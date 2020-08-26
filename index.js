@@ -17,6 +17,10 @@ const BLOCK_TRANSITION_DURATION = 300 // Milliseconds
 const ACTIVE_BLOCK_CENTERING_DURATION = 200 // Milliseconds
 const DOUBLETAP_TRESHOLD = 150 // Milliseconds
 const NULL_FN = () => { }
+const DRAG_ANIMATION = {
+  SCALE: 'scale',
+  WIGGLE: 'wiggle',
+}
 
 class Block extends Component {
 
@@ -53,7 +57,7 @@ class Block extends Component {
 
 }
 
-class SortableGrid extends Component {
+class DragableGrid extends Component {
 
   constructor() {
     super()
@@ -70,6 +74,7 @@ class SortableGrid extends Component {
     this.dragStartAnimation = null
     this.isStartDrag = false
     this.hasChoke = false
+    this.defaultAnimation = DRAG_ANIMATION.SCALE
 
     this.rows = null
     this.dragPosition = null
@@ -90,7 +95,7 @@ class SortableGrid extends Component {
     this.state = {
       gridLayout: null,
       blockPositions: [],
-      startDragWiggle: new Animated.Value(0),
+      startDragAnimation: new Animated.Value(0),
       activeBlock: null,
       blockWidth: null,
       gridHeight: new Animated.Value(0),
@@ -441,26 +446,75 @@ class SortableGrid extends Component {
 
   _defaultDragActivationWiggle = () => {
     if (!this.dragStartAnimation) {
-      this.state.startDragWiggle.setValue(20)
-      Animated.spring(this.state.startDragWiggle, {
-        toValue: 0,
-        velocity: 2000,
-        tension: 2000,
-        friction: 5,
-        useNativeDriver: false
-      }).start()
+      switch (this.defaultAnimation) {
+        case DRAG_ANIMATION.WIGGLE:
+          this.state.startDragAnimation.setValue(20)
+          Animated.spring(this.state.startDragAnimation, {
+            toValue: 0,
+            velocity: 2000,
+            tension: 2000,
+            friction: 5,
+            useNativeDriver: false
+          }).start()
+        case DRAG_ANIMATION.SCALE:
+        default:
+          Animated.timing(
+            this.state.startDragAnimation,
+            {
+              toValue: 100, duration: 200,
+              useNativeDriver: false
+            },
+          ).start(() => {
+            Animated.timing(
+              this.state.startDragAnimation,
+              {
+                toValue: 80, duration: 200,
+                useNativeDriver: false
+              }
+            ).start()
+          })
+      }
     }
   }
 
   _blockActivationWiggle = () => {
-    return this.dragStartAnimation ||
-    {
-      transform: [{
-        rotate: this.state.startDragWiggle.interpolate({
-          inputRange: [0, 360],
-          outputRange: ['0 deg', '360 deg'],
-        })
-      }]
+    if (this.dragStartAnimation) {
+      return this.dragStartAnimation
+    }
+    switch (this.defaultAnimation) {
+      case DRAG_ANIMATION.WIGGLE:
+        return {
+          transform: [{
+            rotate: this.state.startDragAnimation.interpolate({
+              inputRange: [0, 360],
+              outputRange: ['0 deg', '360 deg'],
+            })
+          }]
+        }
+      case DRAG_ANIMATION.SCALE:
+      default:
+        return {
+          transform: [
+            {
+              scaleX: this.state.startDragAnimation.interpolate({
+                inputRange: [0, 100],
+                outputRange: [1, 1.1],
+              })
+            },
+            {
+              scaleY: this.state.startDragAnimation.interpolate({
+                inputRange: [0, 100],
+                outputRange: [1, 1.1],
+              })
+            },
+            // {
+            //   rotate: this.state.startDragAnimation.interpolate({
+            //     inputRange: [0, 100],
+            //     outputRange: ['0 deg', '450 deg']
+            //   })
+            // }
+          ]
+        }
     }
   }
 
@@ -519,7 +573,7 @@ class SortableGrid extends Component {
   // Style getters
 
   _getGridStyle = () => [
-    styles.sortableGrid,
+    styles.dragableGrid,
     this.props.style,
     this._blockPositionsSet() && { height: this.state.gridHeight }
   ]
@@ -597,7 +651,15 @@ class SortableGrid extends Component {
             onLayout={this.saveBlockPositions(key)}
             isStartDrag={this._isStartDrag}
             panHandlers={this._panResponder.panHandlers}
-            onDragCancel={() => { this.onDragCancel(this.itemOrder[key]) }}
+            onDragCancel={() => {
+              this.onDragCancel(this.itemOrder[key])
+              if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
+                Animated.timing(
+                  this.state.startDragAnimation,
+                  { toValue: 0, duration: 200, useNativeDriver: false }
+                ).start()
+              }
+            }}
             delayLongPress={this.dragActivationTreshold}
             onLongPress={this.activateDrag(key)}
             onPress={this.handleTap(item.props)}
@@ -613,7 +675,7 @@ class SortableGrid extends Component {
 
 const styles = StyleSheet.create(
   {
-    sortableGrid: {
+    dragableGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap'
     },
@@ -631,4 +693,4 @@ const styles = StyleSheet.create(
     }
   })
 
-module.exports = SortableGrid
+module.exports = DragableGrid

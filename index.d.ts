@@ -7,6 +7,8 @@
 import * as React from 'react';
 import { StyleProp, ViewStyle, Animated } from 'react-native';
 
+export type DragAnimation = 'scale' | 'wiggle'
+
 interface DragableGridItemProps {
     key: string;
 
@@ -97,6 +99,8 @@ interface DragableGridProps {
      * items in the drageable grid view
      */
     hasChoke?: boolean;
+
+    defaultAnimation?: DragAnimation;
 
     /**
      * Function that is called when the dragging starts. This can be used to
