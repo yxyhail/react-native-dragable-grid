@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import {
   StyleSheet,
   Animated,
-  TouchableWithoutFeedback,
+  TouchableOpacity,
   PanResponder,
   Image,
   View
@@ -34,7 +34,8 @@ class Block extends Component {
       onLayout={this.props.onLayout}
       {...this.props.panHandlers}
     >
-      <TouchableWithoutFeedback
+      <TouchableOpacity
+        activeOpacity={0.8}
         style={{ flex: 1 }}
         delayLongPress={this.props.delayLongPress}
         onPressOut={() => {
@@ -53,7 +54,7 @@ class Block extends Component {
           {this.props.deletionView}
         </View>
 
-      </TouchableWithoutFeedback>
+      </TouchableOpacity>
     </Animated.View>
 
 }
@@ -677,31 +678,33 @@ class DragableGrid extends Component {
             if (item.props.unmoved) {
               this.unmovedSet.add(key)
             }
-            return <Block
-              key={key}
-              style={this._getBlockStyle(key)}
-              onLayout={this.saveBlockPositions(key)}
-              isStartDrag={this._isStartDrag}
-              panHandlers={this._panResponder.panHandlers}
-              onDragCancel={() => {
-                this.onDragCancel(this.itemOrder[key])
-                if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
-                  Animated.timing(
-                    this.state.startDragAnimation,
-                    { toValue: 0, duration: 200, useNativeDriver: false }
-                  ).start()
-                }
-              }}
-              delayLongPress={this.dragActivationTreshold}
-              onLongPress={this.activateDrag(key)}
-              onPress={this.handleTap(item.props)}
-              itemWrapperStyle={this._getItemWrapperStyle(key)}
-              deletionView={this._getDeletionView(key)}
-              inactive={item.props.inactive}
-              unmoved={item.props.unmoved}
-            >
-              {item}
-            </Block>
+            return (
+              <Block
+                key={key}
+                style={this._getBlockStyle(key)}
+                onLayout={this.saveBlockPositions(key)}
+                isStartDrag={this._isStartDrag}
+                panHandlers={this._panResponder.panHandlers}
+                onDragCancel={() => {
+                  this.onDragCancel(this.itemOrder[key])
+                  if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
+                    Animated.timing(
+                      this.state.startDragAnimation,
+                      { toValue: 0, duration: 200, useNativeDriver: false }
+                    ).start()
+                  }
+                }}
+                delayLongPress={this.dragActivationTreshold}
+                onLongPress={this.activateDrag(key)}
+                onPress={this.handleTap(item.props)}
+                itemWrapperStyle={this._getItemWrapperStyle(key)}
+                deletionView={this._getDeletionView(key)}
+                inactive={item.props.inactive}
+                unmoved={item.props.unmoved}
+              >
+                {item}
+              </Block>
+            )
           })}
       </Animated.View>
     )
