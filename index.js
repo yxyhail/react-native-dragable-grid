@@ -466,8 +466,9 @@ class SortableGrid extends Component {
 
   _assignReceivedPropertiesIntoThis(properties) {
     Object.keys(properties).forEach(property => {
-      if (this[property])
+      if (this[property] != undefined) {
         this[property] = properties[property]
+      }
     })
     this.dragStartAnimation = properties.dragStartAnimation
   }
@@ -588,7 +589,6 @@ class SortableGrid extends Component {
       style={this._getGridStyle()}
       onLayout={this.assessGridSize}
     >
-      {/* <View style={{ bottom: 10, height: 100, width: 100, backgroundColor: 'blue' }}></View> */}
       {this.state.gridLayout &&
         this.items.map((item, key) =>
           <Block
@@ -608,7 +608,6 @@ class SortableGrid extends Component {
             {item}
           </Block>
         )}
-      {/* <View style={{ bottom: 10, height: 100, width: 100, backgroundColor: 'blue' }}></View> */}
     </Animated.View>
 }
 
