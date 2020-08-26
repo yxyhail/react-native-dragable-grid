@@ -5,7 +5,8 @@ import {
   TouchableOpacity,
   PanResponder,
   Image,
-  View
+  View,
+  ScrollView
 } from 'react-native'
 
 import _ from 'lodash'
@@ -113,7 +114,8 @@ class DragableGrid extends Component {
       deletionSwipePercent: 0,
       deleteBlock: null,
       deleteBlockOpacity: new Animated.Value(1),
-      deletedItems: []
+      deletedItems: [],
+      scrollable: true
     }
   }
 
@@ -139,6 +141,9 @@ class DragableGrid extends Component {
 
   onStartDrag = (evt, gestureState) => {
     this.isStartDrag = true
+    this.setState({
+      scrollable: false
+    })
     if (this.state.activeBlock != null) {
       let activeBlockPosition = this._getActiveBlock().origin
       let x = activeBlockPosition.x - gestureState.x0
@@ -217,6 +222,9 @@ class DragableGrid extends Component {
       this.deleteBlock()
     else
       this.afterDragRelease()
+    this.setState({
+      scrollable: true
+    })
   }
 
   deleteBlock = () => {
@@ -669,44 +677,49 @@ class DragableGrid extends Component {
   render = () => {
     this.unmovedSet.clear()
     return (
-      <Animated.View
-        style={this._getGridStyle()}
-        onLayout={this.assessGridSize}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={this.state.scrollable}
       >
-        {this.state.gridLayout &&
-          this.items.map((item, key) => {
-            if (item.props.unmoved) {
-              this.unmovedSet.add(key)
-            }
-            return (
-              <Block
-                key={key}
-                style={this._getBlockStyle(key)}
-                onLayout={this.saveBlockPositions(key)}
-                isStartDrag={this._isStartDrag}
-                panHandlers={this._panResponder.panHandlers}
-                onDragCancel={() => {
-                  this.onDragCancel(this.itemOrder[key])
-                  if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
-                    Animated.timing(
-                      this.state.startDragAnimation,
-                      { toValue: 0, duration: 200, useNativeDriver: false }
-                    ).start()
-                  }
-                }}
-                delayLongPress={this.dragActivationTreshold}
-                onLongPress={this.activateDrag(key)}
-                onPress={this.handleTap(item.props)}
-                itemWrapperStyle={this._getItemWrapperStyle(key)}
-                deletionView={this._getDeletionView(key)}
-                inactive={item.props.inactive}
-                unmoved={item.props.unmoved}
-              >
-                {item}
-              </Block>
-            )
-          })}
-      </Animated.View>
+        <Animated.View
+          style={this._getGridStyle()}
+          onLayout={this.assessGridSize}
+        >
+          {this.state.gridLayout &&
+            this.items.map((item, key) => {
+              if (item.props.unmoved) {
+                this.unmovedSet.add(key)
+              }
+              return (
+                <Block
+                  key={key}
+                  style={this._getBlockStyle(key)}
+                  onLayout={this.saveBlockPositions(key)}
+                  isStartDrag={this._isStartDrag}
+                  panHandlers={this._panResponder.panHandlers}
+                  onDragCancel={() => {
+                    this.onDragCancel(this.itemOrder[key])
+                    if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
+                      Animated.timing(
+                        this.state.startDragAnimation,
+                        { toValue: 0, duration: 200, useNativeDriver: false }
+                      ).start()
+                    }
+                  }}
+                  delayLongPress={this.dragActivationTreshold}
+                  onLongPress={this.activateDrag(key)}
+                  onPress={this.handleTap(item.props)}
+                  itemWrapperStyle={this._getItemWrapperStyle(key)}
+                  deletionView={this._getDeletionView(key)}
+                  inactive={item.props.inactive}
+                  unmoved={item.props.unmoved}
+                >
+                  {item}
+                </Block>
+              )
+            })}
+        </Animated.View>
+      </ScrollView>
     )
   }
 
