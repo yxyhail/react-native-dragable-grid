@@ -144,11 +144,18 @@ class DragableGrid extends Component {
     this._removeDisappearedChildren(properties.children)
   }
 
+  setScrollable(value) {
+    const { needScrool } = this.props
+    if (needScrool) {
+      this.setState({
+        scrollable: value
+      })
+    }
+  }
+
   onStartDrag = (evt, gestureState) => {
     this.isStartDrag = true
-    this.setState({
-      scrollable: false
-    })
+    this.setScrollable(false)
     if (this.state.activeBlock != null) {
       let activeBlockPosition = this._getActiveBlock().origin
       let x = activeBlockPosition.x - gestureState.x0
@@ -229,9 +236,7 @@ class DragableGrid extends Component {
       this.afterDragRelease()
     }
     if (this.state.scrollable != this.canScroll) {
-      this.setState({
-        scrollable: this.canScroll
-      })
+      this.setScrollable(this.canScroll)
     }
   }
 
@@ -327,9 +332,7 @@ class DragableGrid extends Component {
     this.refs.animView.measure((x, y, width, h, pageX, pageY) => {
       // console.log('animView:H:' + h + "  y:" + y + ' footerH:' + footerH + ' pageY:' + pageY + " screenH:" + screenH + ' windowH:' + height)
       this.canScroll = pageY + nativeEvent.layout.height + footerH >= height
-      this.setState({
-        scrollable: this.canScroll
-      })
+      this.setScrollable(this.canScroll)
     })
   }
 
