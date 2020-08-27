@@ -319,7 +319,7 @@ class DragableGrid extends Component {
     }
 
     let footerH = 0
-    this.refs.footerView.measure((x, y, width, h, pageX, pageY) => {
+    this.refs.footerView && this.refs.footerView.measure((x, y, width, h, pageX, pageY) => {
       // console.log('footerView:H:' + h)
       footerH = h
     })
