@@ -123,7 +123,7 @@ interface DragableGridProps {
     /**
      * Rendered at the very end of the grid.
      */
-    renderHeaderView?: React.ComponentType<any> | React.ReactElement | null;
+    renderFooterView?: React.ComponentType<any> | React.ReactElement | null;
 
     /**
      * Function that is called when the dragging starts. This can be used to
