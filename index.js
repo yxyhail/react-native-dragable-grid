@@ -701,8 +701,8 @@ class DragableGrid extends Component {
   render = () => {
     this.unmovedSet.clear()
     const {
-      headerView = null,
-      footerView = null,
+      renderHeaderView = null,
+      renderFooterView = null,
       needScrool = true,
       rootStyle = {}
     } = this.props
@@ -714,7 +714,7 @@ class DragableGrid extends Component {
         showsVerticalScrollIndicator={false}
         scrollEnabled={this.state.scrollable}
       >
-        {headerView}
+        {!!renderHeaderView && <View>{renderHeaderView()}</View>}
         <Animated.View
           ref="animView"
           style={this._getGridStyle()}
@@ -754,7 +754,7 @@ class DragableGrid extends Component {
               )
             })}
         </Animated.View>
-        {!!footerView && <View ref={'footerView'}>{footerView}</View>}
+        {!!renderFooterView && <View ref={'footerView'}>{renderFooterView()}</View>}
       </RootView>
     )
   }
