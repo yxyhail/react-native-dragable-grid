@@ -108,6 +108,9 @@ class DragableGrid extends Component {
     this.tapIgnore = false
     this.doubleTapWait = false
 
+    this.deleteView = null
+    this.deleteViewY = 0
+
     this.state = {
       gridLayout: null,
       blockPositions: [],
@@ -145,10 +148,16 @@ class DragableGrid extends Component {
   UNSAFE_componentWillReceiveProps = (properties) => this.handleNewProps(properties)
 
   handleNewProps = (properties) => {
-    // this.manager = new RootSiblingsManager(<AnimateBottom height={0} />)
-    // setTimeout(() => {
-    //   this.manager.update(<AnimateBottom height={-60} />)
-    // }, 2000)
+    this.manager = new RootSiblingsManager(
+      <AnimateBottom
+        onLayout={({ nativeEvent }) => {
+          this.deleteViewY = nativeEvent.layout.y
+        }}
+        ref={(view) => {
+          this.deleteView = view
+        }}
+      />
+    )
     this._assignReceivedPropertiesIntoThis(properties)
     this._saveItemOrder(properties.children)
     this._removeDisappearedChildren(properties.children)
@@ -193,6 +202,7 @@ class DragableGrid extends Component {
       this.dragPosition = dragPosition
       let originalPosition = this._getActiveBlock().origin
       let distanceToOrigin = this._getDistanceTo(originalPosition)
+      console.log('dragPosition:', dragPosition)
       this._getActiveBlock().currentPosition.setValue(dragPosition)
 
       let closest = this.state.activeBlock
@@ -239,6 +249,7 @@ class DragableGrid extends Component {
 
   onReleaseBlock = (evt, gestureState) => {
     this.isStartDrag = false
+    this.deleteView && this.deleteView.hide()
     this.returnBlockToOriginalPosition()
     if (this.state.deleteModeOn && this.state.deletionSwipePercent == 100) {
       this.deleteBlock()
@@ -247,6 +258,17 @@ class DragableGrid extends Component {
     }
     if (this.state.scrollable != this.canScroll) {
       this.setScrollable(this.canScroll)
+    }
+  }
+
+  onCancelDrag = (key) => {
+    this.onDragCancel(this.itemOrder[key])
+    this.deleteView && this.deleteView.hide()
+    if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
+      Animated.timing(
+        this.state.startDragAnimation,
+        { toValue: 0, duration: 200, useNativeDriver: false }
+      ).start()
     }
   }
 
@@ -401,6 +423,7 @@ class DragableGrid extends Component {
 
   activateDrag = (key) => () => {
     if (!this.unmovedSet.has(key)) {
+      this.deleteView && this.deleteView.show()
       this.panCapture = true
       this.onDragStart(this.itemOrder[key])
       this.setState({ activeBlock: key })
@@ -742,15 +765,7 @@ class DragableGrid extends Component {
                   onLayout={this.saveBlockPositions(key)}
                   isStartDrag={this._isStartDrag}
                   panHandlers={this._panResponder.panHandlers}
-                  onDragCancel={() => {
-                    this.onDragCancel(this.itemOrder[key])
-                    if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
-                      Animated.timing(
-                        this.state.startDragAnimation,
-                        { toValue: 0, duration: 200, useNativeDriver: false }
-                      ).start()
-                    }
-                  }}
+                  onDragCancel={() => { this.onCancelDrag(key) }}
                   delayLongPress={this.dragActivationTreshold}
                   onLongPress={this.activateDrag(key)}
                   onPress={this.handleTap(item.props)}
