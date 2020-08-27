@@ -13,6 +13,7 @@ import {
 import _ from 'lodash'
 
 const { width, height } = Dimensions.get('window');
+// const { width: screenW, height: screenH } = Dimensions.get('screen');
 
 // Default values
 const ITEMS_PER_ROW = 3
@@ -222,12 +223,12 @@ class DragableGrid extends Component {
   onReleaseBlock = (evt, gestureState) => {
     this.isStartDrag = false
     this.returnBlockToOriginalPosition()
-    if (this.state.deleteModeOn && this.state.deletionSwipePercent == 100){
+    if (this.state.deleteModeOn && this.state.deletionSwipePercent == 100) {
       this.deleteBlock()
-    } else{
+    } else {
       this.afterDragRelease()
     }
-    if(this.state.scrollable != this.canScroll){
+    if (this.state.scrollable != this.canScroll) {
       this.setState({
         scrollable: this.canScroll
       })
@@ -300,13 +301,12 @@ class DragableGrid extends Component {
   }
 
   assessGridSize = ({ nativeEvent }) => {
-    console.log("Calculating grid size:", nativeEvent.layout.y + nativeEvent.layout.height);
+    // console.log("Calculating grid size:", nativeEvent.layout.y + nativeEvent.layout.height);
     if (this.props.itemWidth && this.props.itemWidth < nativeEvent.layout.width) {
       this.itemsPerRow = Math.floor(nativeEvent.layout.width / this.props.itemWidth)
       this.blockWidth = nativeEvent.layout.width / this.itemsPerRow
       this.blockHeight = this.props.itemHeight || this.blockWidth
-    }
-    else {
+    } else {
       this.blockWidth = nativeEvent.layout.width / this.itemsPerRow
       this.blockHeight = this.blockWidth
     }
@@ -317,24 +317,16 @@ class DragableGrid extends Component {
         blockHeight: this.blockHeight
       })
     }
-    // this.refs.animView.measureInWindow((x, y, width, height) => {
-    //   console.log('1x=', x);//相对父视图位置x
-    //   console.log('1y=', y);//相对父视图位置y
-    //   console.log('1width=', width);//组件宽度
-    //   console.log('1height=', height);//组件高度
-    //   // console.log('pageX=', pageX);//绝对位置x
-    //   // console.log('pageY=', pageY);//绝对位置y
-    // })
+
+    let footerH = 0
+    this.refs.footerView.measure((x, y, width, h, pageX, pageY) => {
+      // console.log('footerView:H:' + h)
+      footerH = h
+    })
 
     this.refs.animView.measure((x, y, width, h, pageX, pageY) => {
-      console.log('1x=', x);//相对父视图位置x
-      console.log('1y=', y);//相对父视图位置y
-      console.log('1width=', width);//组件宽度
-      console.log('1height=', h);//组件高度
-      console.log('pageX=', pageX);//绝对位置x
-      console.log('pageY=', pageY);//绝对位置y
-      console.log('whteisefoijso:' + (pageY + nativeEvent.layout.height) + ' screenH:' + height)
-      this.canScroll = pageY + nativeEvent.layout.height >= height
+      // console.log('animView:H:' + h + "  y:" + y + ' footerH:' + footerH + ' pageY:' + pageY + " screenH:" + screenH + ' windowH:' + height)
+      this.canScroll = pageY + nativeEvent.layout.height + footerH >= height
       this.setState({
         scrollable: this.canScroll
       })
@@ -367,8 +359,6 @@ class DragableGrid extends Component {
         this.initialLayoutDone = true
       }
     }
-    console.log('height:' + height)
-    console.log('nativeEvent.layout.y:' + (nativeEvent.layout.y + this.blockHeight))
   }
 
   getNextBlockCoordinates = () => {
@@ -707,12 +697,21 @@ class DragableGrid extends Component {
 
   render = () => {
     this.unmovedSet.clear()
+    const {
+      headerView = null,
+      footerView = null,
+      needScrool = true,
+      rootStyle = {}
+    } = this.props
+    const RootView = needScrool ? ScrollView : View
     return (
-      <ScrollView
+      <RootView
+        style={[rootStyle]}
         overScrollMode='never'
         showsVerticalScrollIndicator={false}
         scrollEnabled={this.state.scrollable}
       >
+        {headerView}
         <Animated.View
           ref="animView"
           style={this._getGridStyle()}
@@ -752,7 +751,8 @@ class DragableGrid extends Component {
               )
             })}
         </Animated.View>
-      </ScrollView>
+        {!!footerView && <View ref={'footerView'}>{footerView}</View>}
+      </RootView>
     )
   }
 

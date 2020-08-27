@@ -100,7 +100,30 @@ interface DragableGridProps {
      */
     hasChoke?: boolean;
 
+    /**
+     * Default animation when the dragging starts, default value is 'scale'
+     */
     defaultAnimation?: DragAnimation;
+
+    /**
+     * Whether need scroll of the root view, default value is true
+     */
+    needScrool?: boolean;
+
+    /**
+     * Styling for root View
+     */
+    rootStyle?: ViewStyle | null;
+
+    /**
+     * Rendered at the very beginning of the grid.
+     */
+    headerView?: React.ComponentType<any> | React.ReactElement | null;
+
+    /**
+     * Rendered at the very end of the grid.
+     */
+    footerView?: React.ComponentType<any> | React.ReactElement | null;
 
     /**
      * Function that is called when the dragging starts. This can be used to
