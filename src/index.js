@@ -11,6 +11,8 @@ import {
 } from 'react-native'
 
 import _ from 'lodash'
+import AnimateBottom from './AnimateBottom';
+import RootSiblingsManager from 'react-native-root-siblings';
 
 const { width, height } = Dimensions.get('window');
 // const { width: screenW, height: screenH } = Dimensions.get('screen');
@@ -124,6 +126,10 @@ class DragableGrid extends Component {
     }
   }
 
+  componentWillUnmount() {
+    this.manager.destroy()
+  }
+
   toggleDeleteMode = () => {
     let deleteModeOn = !this.state.deleteModeOn
     this.setState({ deleteModeOn })
@@ -139,6 +145,10 @@ class DragableGrid extends Component {
   UNSAFE_componentWillReceiveProps = (properties) => this.handleNewProps(properties)
 
   handleNewProps = (properties) => {
+    // this.manager = new RootSiblingsManager(<AnimateBottom height={0} />)
+    // setTimeout(() => {
+    //   this.manager.update(<AnimateBottom height={-60} />)
+    // }, 2000)
     this._assignReceivedPropertiesIntoThis(properties)
     this._saveItemOrder(properties.children)
     this._removeDisappearedChildren(properties.children)
@@ -639,7 +649,7 @@ class DragableGrid extends Component {
 
   _getDeletionView = (key) => {
     if (this.state.deleteModeOn)
-      return <Image style={this._getImageDeleteIconStyle(key)} source={require('./assets/trash.png')} />
+      return <Image style={this._getImageDeleteIconStyle(key)} source={require('../assets/trash.png')} />
   }
 
   _getItemWrapperStyle = (key) => [
