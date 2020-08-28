@@ -14,7 +14,7 @@ import _ from 'lodash'
 import AnimateBottom from './AnimateBottom';
 import RootSiblingsManager from 'react-native-root-siblings';
 
-const { width, height } = Dimensions.get('window');
+const { width, height: screenH } = Dimensions.get('window');
 // const { width: screenW, height: screenH } = Dimensions.get('screen');
 
 // Default values
@@ -30,7 +30,7 @@ const DRAG_ANIMATION = {
 }
 
 const log = (msg, ...params) => {
-  if (true && __DEV__) {
+  if (false && __DEV__) {
     console.log(msg, ...params)
   }
 }
@@ -116,7 +116,8 @@ class DragableGrid extends Component {
     this.doubleTapWait = false
 
     this.deleteView = null
-    this.deleteViewY = 0
+    // this.deleteViewY = 0
+    this.gridPageY = 0
 
     this.state = {
       gridLayout: null,
@@ -157,14 +158,7 @@ class DragableGrid extends Component {
 
   handleNewProps = (properties) => {
     this.manager = new RootSiblingsManager(
-      <AnimateBottom
-        onLayout={({ nativeEvent }) => {
-          this.deleteViewY = nativeEvent.layout.y
-        }}
-        ref={(view) => {
-          this.deleteView = view
-        }}
-      />
+      <AnimateBottom ref={(view) => { this.deleteView = view }} />
     )
     this._assignReceivedPropertiesIntoThis(properties)
     this._saveItemOrder(properties.children)
@@ -197,6 +191,7 @@ class DragableGrid extends Component {
   }
 
   onMoveBlock = (evt, { moveX, moveY, dx, dy }) => {
+    log('onMoveBlock:', { moveX, moveY, dx, dy })
     if (this.state.activeBlock != null && this._blockPositionsSet()) {
       if (this.state.deleteModeOn) return this.deleteModeMove({ x: moveX, y: moveY })
 
@@ -214,12 +209,15 @@ class DragableGrid extends Component {
       let originalPosition = this._getActiveBlock().origin
       let distanceToOrigin = this._getDistanceTo(originalPosition)
       this._getActiveBlock().currentPosition.setValue(dragPosition)
-      log('dragPosition:', dragPosition)
+      if ((this.gridPageY + dy + this.blockHeight) > (screenH - this.deleteView.getHeight())) {
+        this.deleteView.openTrash()
+      } else {
+        this.deleteView.closeTrash()
+      }
       let closest = this.state.activeBlock
       let closestDistance = distanceToOrigin
       this.state.blockPositions.forEach((block, index) => {
         if (index !== this.state.activeBlock && block.origin) {
-          log('this.state.blockPositions:', dragPosition)
           let blockPosition = block.origin
           let distance = this._getDistanceTo(blockPosition)
 
@@ -386,8 +384,9 @@ class DragableGrid extends Component {
     })
 
     this.refs.animView.measure((x, y, width, h, pageX, pageY) => {
-      // log('animView:H:' + h + "  y:" + y + ' footerH:' + footerH + ' pageY:' + pageY + " screenH:" + screenH + ' windowH:' + height)
-      this.canScroll = pageY + nativeEvent.layout.height + footerH >= height
+      log('===================animView:H:' + h + "  y:" + y + ' footerH:' + footerH + ' pageY:' + pageY)
+      this.canScroll = pageY + nativeEvent.layout.height + footerH >= screenH
+      this.gridPageY = pageY;
       this.setScrollable(this.canScroll)
     })
   }
@@ -405,7 +404,8 @@ class DragableGrid extends Component {
       let blockPositionsSetCount = blockPositions[key] ? this.state.blockPositionsSetCount : ++this.state.blockPositionsSetCount
       let thisPosition = {
         x: nativeEvent.layout.x,
-        y: nativeEvent.layout.y
+        y: nativeEvent.layout.y,
+        pageY: nativeEvent.layout.pageY,
       }
 
       blockPositions[key] = {
