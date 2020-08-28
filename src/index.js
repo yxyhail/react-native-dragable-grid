@@ -30,7 +30,7 @@ const DRAG_ANIMATION = {
 }
 
 const log = (msg, ...params) => {
-  if (false && __DEV__) {
+  if (true && __DEV__) {
     console.log(msg, ...params)
   }
 }
@@ -42,10 +42,9 @@ class Block extends Component {
   }
 
   render = () => {
-    log('Block:render')
     return <Animated.View
       style={this.props.style}
-      onLayout={(nativeEvent) => { log('block :onLayout'); this.props.onLayout(nativeEvent) }}
+      onLayout={(nativeEvent) => { this.props.onLayout(nativeEvent) }}
       {...this.props.panHandlers}
     >
       <TouchableOpacity
@@ -166,7 +165,6 @@ class DragableGrid extends Component {
   }
 
   setScrollable(value) {
-    log('setScrollable')
     const { needScrool } = this.props
     if (needScrool) {
       this.setState({
@@ -209,11 +207,6 @@ class DragableGrid extends Component {
       let originalPosition = this._getActiveBlock().origin
       let distanceToOrigin = this._getDistanceTo(originalPosition)
       this._getActiveBlock().currentPosition.setValue(dragPosition)
-      if ((this.gridPageY + dy + this.blockHeight) > (screenH - this.deleteView.getHeight())) {
-        this.deleteView.openTrash()
-      } else {
-        this.deleteView.closeTrash()
-      }
       let closest = this.state.activeBlock
       let closestDistance = distanceToOrigin
       this.state.blockPositions.forEach((block, index) => {
@@ -231,13 +224,11 @@ class DragableGrid extends Component {
       this.ghostBlocks.forEach(ghostBlockPosition => {
         let distance = this._getDistanceTo(ghostBlockPosition)
         if (distance < closestDistance) {
-          log('distance < closestDistance:', dragPosition)
           closest = this.state.activeBlock
           closestDistance = distance
         }
       })
       if (closest !== this.state.activeBlock && !this.unmovedSet.has(closest)) {
-        log('dragPosition222:', dragPosition)
         Animated.timing(
           this._getBlock(closest).currentPosition,
           {
@@ -257,7 +248,6 @@ class DragableGrid extends Component {
       }
       if (this.state.activeBlock == closest && this.init) {
         this.init = false
-        log('forceUpdate')
         this.forceUpdate()
       }
     }
@@ -266,13 +256,17 @@ class DragableGrid extends Component {
   onReleaseBlock = (evt, gestureState) => {
     log('onReleaseBlock')
     this.isStartDrag = false
-    this.deleteView && this.deleteView.hide()
-    this.returnBlockToOriginalPosition()
-    if (this.state.deleteModeOn && this.state.deletionSwipePercent == 100) {
+    if (this.deleteView.getIsTrashOpen()) {
       this.deleteBlock()
     } else {
-      this.afterDragRelease()
+      this.returnBlockToOriginalPosition()
+      if ((this.state.deleteModeOn && this.state.deletionSwipePercent == 100)) {
+        this.deleteBlock()
+      } else {
+        this.afterDragRelease()
+      }
     }
+    this.deleteView && this.deleteView.hide()
     if (this.state.scrollable != this.canScroll) {
       this.setScrollable(this.canScroll)
     }
@@ -308,13 +302,17 @@ class DragableGrid extends Component {
     return new Promise((resolve, reject) => {
       Animated.timing(
         this.state.deleteBlockOpacity,
-        { toValue: 0, duration: 2 * this.activeBlockCenteringDuration }
+        {
+          toValue: 0,
+          duration: 2 * this.activeBlockCenteringDuration,
+          useNativeDriver: false
+        }
       ).start(resolve)
     })
   }
 
   animateBlockMove = (blockIndex, position) => {
-    log("animateBlockMove:blockIndex:" + blockIndex + ' ', position)
+    console.log("animateBlockMove:blockIndex:" + blockIndex + ' ', position)
     Animated.timing(
       this._getBlock(blockIndex).currentPosition,
       {
@@ -322,9 +320,7 @@ class DragableGrid extends Component {
         duration: this.blockTransitionDuration,
         useNativeDriver: false
       }
-    ).start(() => {
-      log('Animated.timing1')
-    })
+    ).start()
   }
 
   returnBlockToOriginalPosition = () => {
@@ -398,14 +394,18 @@ class DragableGrid extends Component {
   }
 
   saveBlockPositions = (key) => ({ nativeEvent }) => {
-    log('saveBlockPositions')
+    log('saveBlockPositions:', nativeEvent.layout)
     let blockPositions = this.state.blockPositions
+    if ((this.gridPageY + nativeEvent.layout.y + this.blockHeight) > (screenH - this.deleteView.getHeight())) {
+      this.deleteView.openTrash()
+    } else {
+      this.deleteView.closeTrash()
+    }
     if (!blockPositions[key]) {
       let blockPositionsSetCount = blockPositions[key] ? this.state.blockPositionsSetCount : ++this.state.blockPositionsSetCount
       let thisPosition = {
         x: nativeEvent.layout.x,
         y: nativeEvent.layout.y,
-        pageY: nativeEvent.layout.pageY,
       }
 
       blockPositions[key] = {
@@ -772,7 +772,6 @@ class DragableGrid extends Component {
   }
 
   render = () => {
-    log('render')
     this.unmovedSet.clear()
     const {
       renderHeaderView = null,

@@ -72,6 +72,10 @@ export default class AnimateBottom extends React.Component {
     return height
   }
 
+  getIsTrashOpen = () => {
+    return this.isTrashOpen
+  }
+
   render() {
     return (
       <Animated.View
@@ -80,7 +84,7 @@ export default class AnimateBottom extends React.Component {
           position: 'absolute',
           right: 0,
           bottom: this.state.bottom,
-          opacity: 0.8,
+          opacity: this.isTrashOpen ? 0.7 : 0.8,
           left: 0,
           backgroundColor: 'red'
         }}>
@@ -91,7 +95,7 @@ export default class AnimateBottom extends React.Component {
             height: contentHeight,
           }}>
           <Image style={{ height: 20, width: 20 }} source={this.isTrashOpen ? require('../assets/bottom_trash_open.png') : require('../assets/bottom_trash_close.png')} />
-          <Text style={{ marginTop: 5, color: 'white', fontSize: 12 }}>拖动到此处删除</Text>
+          <Text style={{ marginTop: 5, color: 'white', fontSize: 12 }}>{this.isTrashOpen ? '松开即可删除' : '拖动到此处删除'}</Text>
         </View>
         {isX && <View style={{ width: '100%', height: saveHeight }} />}
       </Animated.View>
