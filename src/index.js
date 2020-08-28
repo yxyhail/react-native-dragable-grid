@@ -29,16 +29,23 @@ const DRAG_ANIMATION = {
   WIGGLE: 'wiggle',
 }
 
+const log = (msg, ...params) => {
+  if (true && __DEV__) {
+    console.log(msg, ...params)
+  }
+}
+
 class Block extends Component {
 
   constructor(props) {
     super(props)
   }
 
-  render = () =>
-    <Animated.View
+  render = () => {
+    log('Block:render')
+    return <Animated.View
       style={this.props.style}
-      onLayout={(nativeEvent) => { console.log('block :onLayout'); this.props.onLayout(nativeEvent) }}
+      onLayout={(nativeEvent) => { log('block :onLayout'); this.props.onLayout(nativeEvent) }}
       {...this.props.panHandlers}
     >
       <TouchableOpacity
@@ -63,7 +70,7 @@ class Block extends Component {
 
       </TouchableOpacity>
     </Animated.View>
-
+  }
 }
 
 class DragableGrid extends Component {
@@ -127,6 +134,7 @@ class DragableGrid extends Component {
       deletedItems: [],
       scrollable: false
     }
+    this.init = true
   }
 
   componentWillUnmount() {
@@ -164,7 +172,7 @@ class DragableGrid extends Component {
   }
 
   setScrollable(value) {
-    console.log('setScrollable')
+    log('setScrollable')
     const { needScrool } = this.props
     if (needScrool) {
       this.setState({
@@ -175,9 +183,10 @@ class DragableGrid extends Component {
 
   onStartDrag = (evt, gestureState) => {
     this.isStartDrag = true
-    console.log('onStartDrag')
-    // this.setScrollable(false)
+    log('onStartDrag')
+    this.setScrollable(false)
     if (this.state.activeBlock != null) {
+      log('onStartDrag2')
       let activeBlockPosition = this._getActiveBlock().origin
       let x = activeBlockPosition.x - gestureState.x0
       let y = activeBlockPosition.y - gestureState.y0
@@ -205,12 +214,12 @@ class DragableGrid extends Component {
       let originalPosition = this._getActiveBlock().origin
       let distanceToOrigin = this._getDistanceTo(originalPosition)
       this._getActiveBlock().currentPosition.setValue(dragPosition)
-      console.log('dragPosition:', dragPosition)
+      log('dragPosition:', dragPosition)
       let closest = this.state.activeBlock
       let closestDistance = distanceToOrigin
       this.state.blockPositions.forEach((block, index) => {
         if (index !== this.state.activeBlock && block.origin) {
-          console.log('this.state.blockPositions:', dragPosition)
+          log('this.state.blockPositions:', dragPosition)
           let blockPosition = block.origin
           let distance = this._getDistanceTo(blockPosition)
 
@@ -224,13 +233,13 @@ class DragableGrid extends Component {
       this.ghostBlocks.forEach(ghostBlockPosition => {
         let distance = this._getDistanceTo(ghostBlockPosition)
         if (distance < closestDistance) {
-          console.log('distance < closestDistance:', dragPosition)
+          log('distance < closestDistance:', dragPosition)
           closest = this.state.activeBlock
           closestDistance = distance
         }
       })
       if (closest !== this.state.activeBlock && !this.unmovedSet.has(closest)) {
-        console.log('dragPosition222:', dragPosition)
+        log('dragPosition222:', dragPosition)
         Animated.timing(
           this._getBlock(closest).currentPosition,
           {
@@ -248,11 +257,16 @@ class DragableGrid extends Component {
         this.itemOrder[this.state.activeBlock].order = this.itemOrder[closest].order
         this.itemOrder[closest].order = tempOrderIndex
       }
+      if (this.state.activeBlock == closest && this.init) {
+        this.init = false
+        log('forceUpdate')
+        this.forceUpdate()
+      }
     }
   }
 
   onReleaseBlock = (evt, gestureState) => {
-    console.log('onReleaseBlock')
+    log('onReleaseBlock')
     this.isStartDrag = false
     this.deleteView && this.deleteView.hide()
     this.returnBlockToOriginalPosition()
@@ -267,7 +281,7 @@ class DragableGrid extends Component {
   }
 
   onCancelDrag = (key) => {
-    console.log('onCancelDrag')
+    log('onCancelDrag')
     this.onDragCancel(this.itemOrder[key])
     this.deleteView && this.deleteView.hide()
     if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
@@ -302,7 +316,7 @@ class DragableGrid extends Component {
   }
 
   animateBlockMove = (blockIndex, position) => {
-    console.log("animateBlockMove:blockIndex:" + blockIndex + ' ', position)
+    log("animateBlockMove:blockIndex:" + blockIndex + ' ', position)
     Animated.timing(
       this._getBlock(blockIndex).currentPosition,
       {
@@ -311,12 +325,12 @@ class DragableGrid extends Component {
         useNativeDriver: false
       }
     ).start(() => {
-      console.log('Animated.timing1')
+      log('Animated.timing1')
     })
   }
 
   returnBlockToOriginalPosition = () => {
-    console.log('returnBlockToOriginalPosition')
+    log('returnBlockToOriginalPosition')
     let activeBlockCurrentPosition = this._getActiveBlock().currentPosition
     activeBlockCurrentPosition.flattenOffset()
     Animated.timing(
@@ -348,7 +362,7 @@ class DragableGrid extends Component {
   }
 
   assessGridSize = ({ nativeEvent }) => {
-    console.log("Calculating grid size:", nativeEvent.layout.y + nativeEvent.layout.height);
+    log("Calculating grid size:", nativeEvent.layout.y + nativeEvent.layout.height);
     if (this.props.itemWidth && this.props.itemWidth < nativeEvent.layout.width) {
       this.itemsPerRow = Math.floor(nativeEvent.layout.width / this.props.itemWidth)
       this.blockWidth = nativeEvent.layout.width / this.itemsPerRow
@@ -367,12 +381,12 @@ class DragableGrid extends Component {
 
     let footerH = 0
     this.refs.footerView && this.refs.footerView.measure((x, y, width, h, pageX, pageY) => {
-      // console.log('footerView:H:' + h)
+      // log('footerView:H:' + h)
       footerH = h
     })
 
     this.refs.animView.measure((x, y, width, h, pageX, pageY) => {
-      // console.log('animView:H:' + h + "  y:" + y + ' footerH:' + footerH + ' pageY:' + pageY + " screenH:" + screenH + ' windowH:' + height)
+      // log('animView:H:' + h + "  y:" + y + ' footerH:' + footerH + ' pageY:' + pageY + " screenH:" + screenH + ' windowH:' + height)
       this.canScroll = pageY + nativeEvent.layout.height + footerH >= height
       this.setScrollable(this.canScroll)
     })
@@ -385,7 +399,7 @@ class DragableGrid extends Component {
   }
 
   saveBlockPositions = (key) => ({ nativeEvent }) => {
-    console.log('saveBlockPositions')
+    log('saveBlockPositions')
     let blockPositions = this.state.blockPositions
     if (!blockPositions[key]) {
       let blockPositionsSetCount = blockPositions[key] ? this.state.blockPositionsSetCount : ++this.state.blockPositionsSetCount
@@ -408,7 +422,7 @@ class DragableGrid extends Component {
   }
 
   getNextBlockCoordinates = () => {
-    console.log('getNextBlockCoordinates')
+    log('getNextBlockCoordinates')
     let blockWidth = this.state.blockWidth
     let blockHeight = this.state.blockHeight
     let placeOnRow = this.items.length % this.itemsPerRow
@@ -418,7 +432,7 @@ class DragableGrid extends Component {
   }
 
   setGhostPositions = () => {
-    console.log('setGhostPositions')
+    log('setGhostPositions')
     this.ghostBlocks = []
     this.reAssessGridRows()
     let blockWidth = this.state.blockWidth
@@ -435,13 +449,13 @@ class DragableGrid extends Component {
   }
 
   activateDrag = (key) => () => {
-    console.log('activateDrag')
     if (!this.unmovedSet.has(key)) {
       this.deleteView && this.deleteView.show()
       this.panCapture = true
       this.onDragStart(this.itemOrder[key])
       this.setState({ activeBlock: key })
       this._defaultDragActivationWiggle()
+      log('activateDrag:' + key)
     }
   }
 
@@ -461,7 +475,7 @@ class DragableGrid extends Component {
   _blockPositionsSet = () => this.state.blockPositionsSetCount === this.items.length
 
   _saveItemOrder = (items) => {
-    console.log('_saveItemOrder')
+    log('_saveItemOrder')
     items.forEach((item, index) => {
       const foundKey = _.findKey(this.itemOrder, oldItem => oldItem.key === item.key)
 
@@ -488,7 +502,7 @@ class DragableGrid extends Component {
   }
 
   _removeDisappearedChildren = (items) => {
-    console.log('_removeDisappearedChildren')
+    log('_removeDisappearedChildren')
     let deleteBlockIndices = []
     _.cloneDeep(this.itemOrder).forEach((item, index) => {
       if (!_.findKey(items, (oldItem) => oldItem.key === item.key)) {
@@ -524,7 +538,7 @@ class DragableGrid extends Component {
   }
 
   _fixItemOrderOnDeletion = (orderItem) => {
-    console.log('_fixItemOrderOnDeletion')
+    log('_fixItemOrderOnDeletion')
     if (!orderItem) return false
     orderItem.order--
     this._fixItemOrderOnDeletion(_.find(this.itemOrder, item => item.order === orderItem.order + 2))
@@ -553,7 +567,7 @@ class DragableGrid extends Component {
   }
 
   _defaultDragActivationWiggle = () => {
-    console.log('_defaultDragActivationWiggle')
+    log('_defaultDragActivationWiggle')
     if (!this.dragStartAnimation) {
       switch (this.defaultAnimation) {
         case DRAG_ANIMATION.WIGGLE:
@@ -589,7 +603,7 @@ class DragableGrid extends Component {
   }
 
   _blockActivationWiggle = () => {
-    console.log("_blockActivationWiggle")
+    log("_blockActivationWiggle")
     if (this.dragStartAnimation) {
       return this.dragStartAnimation
     }
@@ -678,8 +692,14 @@ class DragableGrid extends Component {
     })
 
   onActiveBlockIsSet = (fn) => (evt, gestureState) => {
-    console.log('onActiveBlockIsSet')
+    log('onActiveBlockIsSet')
     if (this.state.activeBlock != null) fn(evt, gestureState)
+  }
+
+  log(msg, ...params) {
+    if (LOG) {
+      log(msg, ...params)
+    }
   }
 
   // Style getters
@@ -752,7 +772,7 @@ class DragableGrid extends Component {
   }
 
   render = () => {
-    console.log('render')
+    log('render')
     this.unmovedSet.clear()
     const {
       renderHeaderView = null,
