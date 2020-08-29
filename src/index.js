@@ -478,9 +478,18 @@ class DragableGrid extends Component {
     log('_saveItemOrder')
     items.forEach((item, index) => {
       const foundKey = _.findKey(this.itemOrder, oldItem => oldItem.key === item.key)
-
+      log('foundKey:' + foundKey + ' item.unmoved: ', item.props.unmoved)
       if (foundKey) {
-        this.items[foundKey] = item;
+        if (item.props.unmoved) {
+          this.items.splice(foundKey, 1)
+          if (index == items.length - 1) {
+            this.items.push(item)
+          } else {
+            this.items.unshift(item)
+          }
+        } else {
+          this.items[foundKey] = item;
+        }
       } else {
         this.itemOrder.push({ key: item.key, ref: item.ref, order: this.items.length });
         if (!this.initialLayoutDone) {
@@ -795,6 +804,7 @@ class DragableGrid extends Component {
         >
           {this.state.gridLayout &&
             this.items.map((item, key) => {
+              log('===========itmes Key:' + key + 'item.key:' + item.key)
               if (item.props.unmoved) {
                 this.unmovedSet.add(key)
               }
