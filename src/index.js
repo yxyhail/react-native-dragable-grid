@@ -53,12 +53,20 @@ class Block extends Component {
         delayLongPress={this.props.delayLongPress}
         onPressOut={() => {
           let isStartDrag = this.props.isStartDrag && this.props.isStartDrag() == 'YES'
-          if (!isStartDrag) {
+          if (!isStartDrag && this.isLongPress) {
+            this.isLongPress = false
             this.props.onDragCancel && this.props.onDragCancel()
           }
         }}
-        onLongPress={() => this.props.inactive || this.props.unmoved || this.props.onLongPress()}
-        onPress={() => this.props.inactive || this.props.onPress()}>
+        onLongPress={() => {
+          this.isLongPress = true
+          return this.props.inactive || this.props.unmoved || this.props.onLongPress()
+        }}
+        onPress={() => {
+          this.isLongPress = false
+          this.props.inactive || this.props.onPress()
+        }}
+      >
 
         <View style={styles.itemImageContainer}>
           <View style={this.props.itemWrapperStyle}>
@@ -292,7 +300,7 @@ class DragableGrid extends Component {
         this.setState({ activeBlock: null, deleteBlock: null }, () => {
           this.onDeleteItem(this.itemOrder[activeBlock])
           this.deleteBlocks([activeBlock])
-          this.afterDragRelease()
+          // this.afterDragRelease()
         })
       })
   }
@@ -339,9 +347,15 @@ class DragableGrid extends Component {
 
   afterDragRelease = () => {
     let itemOrder = _.sortBy(this.itemOrder, item => item.order)
-    this.onDragRelease({ itemOrder })
+    log('afterDragRelease:', itemOrder)
+    this.onDragRelease(itemOrder)
     this.setState({ activeBlock: null })
     this.panCapture = false
+  }
+
+  sortByyyyy() {
+    return _.sortBy(this.itemOrder, item => item.order)
+    // return this.itemOrder;
   }
 
   deleteModeMove = ({ x, y }) => {
@@ -464,7 +478,7 @@ class DragableGrid extends Component {
     if (this.tapIgnore) this._resetTapIgnoreTime()
     else if (onDoubleTap != null) {
       this.doubleTapWait ? this._onDoubleTap(onDoubleTap) : this._onSingleTap(onTap)
-    } else onTap()
+    } else onTap(this.sortByyyyy())
   }
 
   // Helpers & other boring stuff
@@ -672,7 +686,7 @@ class DragableGrid extends Component {
     this.doubleTapWait = true
     this.tapTimer = setTimeout(() => {
       this.doubleTapWait = false
-      onTap()
+      onTap(this.sortByyyyy())
     }, this.doubleTapTreshold)
   }
 

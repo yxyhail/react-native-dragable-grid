@@ -16,7 +16,7 @@ interface DragableGridItemProps {
      * Function that is executed when the block is tapped once, but not pressed
      *  for long enough to activate the drag.
      */
-    onTap?(): void;
+    onTap?(item: OrderedItem): void;
 
     /**
      * Function that is executed when the block is double tapped within a
