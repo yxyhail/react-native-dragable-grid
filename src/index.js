@@ -280,9 +280,9 @@ class DragableGrid extends Component {
     }
   }
 
-  onCancelDrag = (key) => {
+  onCancelDrag = (index) => {
     log('onCancelDrag')
-    this.onDragCancel(this.itemOrder[key])
+    this.onDragCancel(this.itemOrder[index])
     this.deleteView && this.deleteView.hide()
     if (!this.dragStartAnimation && this.defaultAnimation == DRAG_ANIMATION.SCALE) {
       Animated.timing(
@@ -347,15 +347,16 @@ class DragableGrid extends Component {
 
   afterDragRelease = () => {
     let itemOrder = _.sortBy(this.itemOrder, item => item.order)
-    log('afterDragRelease:', itemOrder)
+    log('afterDragRelease:', this.itemOrder)
     this.onDragRelease(itemOrder)
     this.setState({ activeBlock: null })
     this.panCapture = false
   }
 
-  sortByyyyy() {
-    return _.sortBy(this.itemOrder, item => item.order)
-    // return this.itemOrder;
+  getOrderByKey(key) {
+    // return _.sortBy(this.itemOrder, item => item.order)
+    const filterList = this.itemOrder.filter(item => item.key == key)
+    return filterList[0].order;
   }
 
   deleteModeMove = ({ x, y }) => {
@@ -407,7 +408,7 @@ class DragableGrid extends Component {
     if (this.state.blockWidth && oldRows != this.rows) this._animateGridHeight()
   }
 
-  saveBlockPositions = (key) => ({ nativeEvent }) => {
+  saveBlockPositions = (index) => ({ nativeEvent }) => {
     // log('saveBlockPositions:', nativeEvent.layout)
     let blockPositions = this.state.blockPositions
     if ((this.gridPageY + nativeEvent.layout.y + this.blockHeight) > (screenH - (this.deleteView ? this.deleteView.getHeight() : 50))) {
@@ -415,15 +416,15 @@ class DragableGrid extends Component {
     } else {
       this.deleteView && this.deleteView.closeTrash()
     }
-    if (!blockPositions[key]) {
-      let blockPositionsSetCount = blockPositions[key] ? this.state.blockPositionsSetCount : ++this.state.blockPositionsSetCount
+    if (!blockPositions[index]) {
+      let blockPositionsSetCount = blockPositions[index] ? this.state.blockPositionsSetCount : ++this.state.blockPositionsSetCount
       log('savePosition: blockPositionsSetCount:' + blockPositionsSetCount)
       let thisPosition = {
         x: nativeEvent.layout.x,
         y: nativeEvent.layout.y,
       }
 
-      blockPositions[key] = {
+      blockPositions[index] = {
         currentPosition: new Animated.ValueXY(thisPosition),
         origin: thisPosition
       }
@@ -463,22 +464,23 @@ class DragableGrid extends Component {
     }
   }
 
-  activateDrag = (key) => () => {
-    if (!this.unmovedSet.has(key)) {
+  activateDrag = (index) => () => {
+    if (!this.unmovedSet.has(index)) {
       this.deleteView && this.deleteView.show()
       this.panCapture = true
-      this.onDragStart(this.itemOrder[key])
-      this.setState({ activeBlock: key })
+      this.onDragStart(this.itemOrder[index])
+      this.setState({ activeBlock: index })
       this._defaultDragActivationWiggle()
-      log('activateDrag:' + key)
+      log('activateDrag:' + index)
     }
   }
 
-  handleTap = ({ onTap = NULL_FN, onDoubleTap = NULL_FN }) => () => {
+  handleTap = ({ props: { onTap = NULL_FN, onDoubleTap = NULL_FN, source }, key }) => () => {
+    // console.log("source.uri:" + source.uri)
     if (this.tapIgnore) this._resetTapIgnoreTime()
     else if (onDoubleTap != null) {
-      this.doubleTapWait ? this._onDoubleTap(onDoubleTap) : this._onSingleTap(onTap)
-    } else onTap(this.sortByyyyy())
+      this.doubleTapWait ? this._onDoubleTap(onDoubleTap) : this._onSingleTap(onTap, key)
+    } else onTap(this.getOrderByKey(key))
   }
 
   // Helpers & other boring stuff
@@ -682,11 +684,12 @@ class DragableGrid extends Component {
     this.dragStartAnimation = properties.dragStartAnimation
   }
 
-  _onSingleTap = (onTap) => {
+  _onSingleTap = (onTap, key) => {
+    console.log('_onSingleTap:::', key)
     this.doubleTapWait = true
     this.tapTimer = setTimeout(() => {
       this.doubleTapWait = false
-      onTap(this.sortByyyyy())
+      onTap(this.getOrderByKey(key))
     }, this.doubleTapTreshold)
   }
 
@@ -738,22 +741,22 @@ class DragableGrid extends Component {
     this._blockPositionsSet() && { height: this.state.gridHeight }
   ]
 
-  _getDeletionView = (key) => {
+  _getDeletionView = (index) => {
     if (this.state.deleteModeOn)
-      return <Image style={this._getImageDeleteIconStyle(key)} source={require('../assets/trash.png')} />
+      return <Image style={this._getImageDeleteIconStyle(index)} source={require('../assets/trash.png')} />
   }
 
-  _getItemWrapperStyle = (key) => [
+  _getItemWrapperStyle = (index) => [
     //TODO
     { flex: 1, justifyContent: 'center', alignItems: 'center', },
-    this.state.activeBlock == key
+    this.state.activeBlock == index
     && this.state.deleteModeOn
-    && this._getBlock(key).origin
+    && this._getBlock(index).origin
     &&
-    { opacity: 1.5 - this._getDynamicOpacity(key) }
+    { opacity: 1.5 - this._getDynamicOpacity(index) }
   ]
 
-  _getImageDeleteIconStyle = (key) => [
+  _getImageDeleteIconStyle = (index) => [
     {
       position: 'absolute',
       top: this.state.blockWidth / 2 - 15,
@@ -762,19 +765,19 @@ class DragableGrid extends Component {
       height: 30,
       opacity: .5
     },
-    this.state.activeBlock == key
-    && this._getBlock(key).origin
+    this.state.activeBlock == index
+    && this._getBlock(index).origin
     &&
-    { opacity: .5 + this._getDynamicOpacity(key) }
+    { opacity: .5 + this._getDynamicOpacity(index) }
   ]
 
-  _getDynamicOpacity = (key) =>
-    (this._getBlock(key).currentPosition.y._value
-      + this._getBlock(key).currentPosition.y._offset
-      - this._getBlock(key).origin.y
+  _getDynamicOpacity = (index) =>
+    (this._getBlock(index).currentPosition.y._value
+      + this._getBlock(index).currentPosition.y._offset
+      - this._getBlock(index).origin.y
     ) / 50
 
-  _getBlockStyle = (key) => [
+  _getBlockStyle = (index) => [
     {
       width: this.state.blockWidth,
       height: this.state.blockHeight,
@@ -785,14 +788,14 @@ class DragableGrid extends Component {
     this._blockPositionsSet() && (this.initialDragDone || this.state.deleteModeOn) &&
     {
       position: 'absolute',
-      top: this._getBlock(key).currentPosition.getLayout().top,
-      left: this._getBlock(key).currentPosition.getLayout().left
+      top: this._getBlock(index).currentPosition.getLayout().top,
+      left: this._getBlock(index).currentPosition.getLayout().left
     },
-    this.state.activeBlock == key && this._blockActivationWiggle(),
-    this.state.activeBlock == key && { zIndex: 1 },
+    this.state.activeBlock == index && this._blockActivationWiggle(),
+    this.state.activeBlock == index && { zIndex: 1 },
     this.state.deleteBlock != null && { zIndex: 2 },
-    this.state.deleteBlock == key && { opacity: this.state.deleteBlockOpacity },
-    this.state.deletedItems.indexOf(key) !== -1 && styles.deletedBlock
+    this.state.deleteBlock == index && { opacity: this.state.deleteBlockOpacity },
+    this.state.deletedItems.indexOf(index) !== -1 && styles.deletedBlock
   ]
 
   _isStartDrag = () => {
@@ -822,24 +825,24 @@ class DragableGrid extends Component {
           onLayout={this.assessGridSize}
         >
           {this.state.gridLayout &&
-            this.items.map((item, key) => {
+            this.items.map((item, index) => {
               // log('===========itmes Key:' + key + 'item.key:' + item.key)
               if (item.props.unmoved) {
-                this.unmovedSet.add(key)
+                this.unmovedSet.add(index)
               }
               return (
                 <Block
-                  key={key}
-                  style={this._getBlockStyle(key)}
-                  onLayout={this.saveBlockPositions(key)}
+                  key={index}
+                  style={this._getBlockStyle(index)}
+                  onLayout={this.saveBlockPositions(index)}
                   isStartDrag={this._isStartDrag}
                   panHandlers={this._panResponder.panHandlers}
-                  onDragCancel={() => { this.onCancelDrag(key) }}
+                  onDragCancel={() => { this.onCancelDrag(index) }}
                   delayLongPress={this.dragActivationTreshold}
-                  onLongPress={this.activateDrag(key)}
-                  onPress={this.handleTap(item.props)}
-                  itemWrapperStyle={this._getItemWrapperStyle(key)}
-                  deletionView={this._getDeletionView(key)}
+                  onLongPress={this.activateDrag(index)}
+                  onPress={this.handleTap(item)}
+                  itemWrapperStyle={this._getItemWrapperStyle(index)}
+                  deletionView={this._getDeletionView(index)}
                   inactive={item.props.inactive}
                   unmoved={item.props.unmoved}
                 >
