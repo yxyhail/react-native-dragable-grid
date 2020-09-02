@@ -146,9 +146,6 @@ class DragableGrid extends Component {
     this.init = true
   }
 
-  componentWillUnmount() {
-    this.manager && this.manager.destroy()
-  }
 
   toggleDeleteMode = () => {
     let deleteModeOn = !this.state.deleteModeOn
@@ -160,7 +157,10 @@ class DragableGrid extends Component {
 
   componentDidMount = () => this.handleNewProps(this.props)
 
-  UNSAFE_componentWillUnmount = () => { if (this.tapTimer) clearTimeout(this.tapTimer) }
+  UNSAFE_componentWillUnmount = () => {
+    this.manager && this.manager.destroy()
+    if (this.tapTimer) clearTimeout(this.tapTimer)
+  }
 
   UNSAFE_componentWillReceiveProps = (properties) => this.handleNewProps(properties)
 
@@ -196,9 +196,9 @@ class DragableGrid extends Component {
   }
 
   onMoveBlock = (evt, { moveX, moveY, dx, dy }) => {
-    log('this.state.blockPositionsSetCount' + this.state.blockPositionsSetCount + ' === this.items.length:' + this.items.length)
+    // log('this.state.blockPositionsSetCount' + this.state.blockPositionsSetCount + ' === this.items.length:' + this.items.length)
     if (this.state.activeBlock != null && this._blockPositionsSet()) {
-      log('onMoveBlock:', { moveX, moveY, dx, dy })
+      // log('onMoveBlock:', { moveX, moveY, dx, dy })
       if (this.state.deleteModeOn) return this.deleteModeMove({ x: moveX, y: moveY })
 
       if (dx != 0 || dy != 0) this.initialDragDone = true
@@ -253,6 +253,7 @@ class DragableGrid extends Component {
         var tempOrderIndex = this.itemOrder[this.state.activeBlock].order
         this.itemOrder[this.state.activeBlock].order = this.itemOrder[closest].order
         this.itemOrder[closest].order = tempOrderIndex
+        // this.props.onItemMoved && this.props.onItemMoved(_.sortBy(this.itemOrder, item => item.order))
       }
       if (this.state.activeBlock == closest && this.init) {
         this.init = false
@@ -298,7 +299,7 @@ class DragableGrid extends Component {
       .then(() => {
         let activeBlock = this.state.activeBlock
         this.setState({ activeBlock: null, deleteBlock: null }, () => {
-          this.onDeleteItem(this.itemOrder[activeBlock])
+          this.onDeleteItem(this.itemOrder[activeBlock], _.sortBy(this.itemOrder, item => item.order))
           this.deleteBlocks([activeBlock])
           // this.afterDragRelease()
         })
@@ -355,6 +356,7 @@ class DragableGrid extends Component {
 
   getOrderByKey(key) {
     // return _.sortBy(this.itemOrder, item => item.order)
+    console.log('getOrderByKey:' + key + ' this.itemOrder:' + JSON.stringify(this.itemOrder))
     const filterList = this.itemOrder.filter(item => item.key == key)
     return filterList[0].order;
   }
@@ -418,7 +420,7 @@ class DragableGrid extends Component {
     }
     if (!blockPositions[index]) {
       let blockPositionsSetCount = blockPositions[index] ? this.state.blockPositionsSetCount : ++this.state.blockPositionsSetCount
-      log('savePosition: blockPositionsSetCount:' + blockPositionsSetCount)
+      // log('savePosition: blockPositionsSetCount:' + blockPositionsSetCount)
       let thisPosition = {
         x: nativeEvent.layout.x,
         y: nativeEvent.layout.y,
@@ -438,7 +440,7 @@ class DragableGrid extends Component {
   }
 
   getNextBlockCoordinates = () => {
-    log('getNextBlockCoordinates')
+    // log('getNextBlockCoordinates')
     let blockWidth = this.state.blockWidth
     let blockHeight = this.state.blockHeight
     let placeOnRow = this.items.length % this.itemsPerRow
@@ -448,7 +450,7 @@ class DragableGrid extends Component {
   }
 
   setGhostPositions = () => {
-    log('setGhostPositions')
+    // log('setGhostPositions')
     this.ghostBlocks = []
     this.reAssessGridRows()
     let blockWidth = this.state.blockWidth
@@ -471,7 +473,7 @@ class DragableGrid extends Component {
       this.onDragStart(this.itemOrder[index])
       this.setState({ activeBlock: index })
       this._defaultDragActivationWiggle()
-      log('activateDrag:' + index)
+      // log('activateDrag:' + index)
     }
   }
 
@@ -492,9 +494,14 @@ class DragableGrid extends Component {
   _blockPositionsSet = () => true
 
   _saveItemOrder = (items) => {
-    log('_saveItemOrder')
+    // log('_saveItemOrder')
+    log('_saveItemOrder itemOrder:', this.itemOrder)
+    // this.itemOrder = _.sortBy(this.itemOrder, item => item.order)
     items.forEach((item, index) => {
-      const foundKey = _.findKey(this.itemOrder, oldItem => oldItem.key === item.key)
+      const foundKey = _.findKey(this.itemOrder, oldItem => {
+        log('findKey:_oldItem.key:' + oldItem.key + '  item.key:' + item.key);
+        return oldItem.key === item.key
+      })
       log('foundKey:' + foundKey + ' item.unmoved: ', item.props.unmoved)
       if (foundKey) {
         if (item.props.unmoved) {
@@ -509,7 +516,8 @@ class DragableGrid extends Component {
           this.items[foundKey] = item;
         }
       } else {
-        this.itemOrder.push({ key: item.key, ref: item.ref, order: this.items.length, originIndex: index });
+        log('_saveItemOrder:push::')
+        this.itemOrder.push({ key: item.key, uri: item.props.source.uri, ref: item.ref, order: this.items.length, originIndex: index });
         if (!this.initialLayoutDone) {
           this.items.push(item)
         } else {
@@ -526,10 +534,18 @@ class DragableGrid extends Component {
         }
       }
     })
+    // if (this.items.length > 1 && this.itemOrder[0].key.indexOf('add') > -1) {
+    //   this.itemOrder.shift()
+    //   this.itemOrder = this.itemOrder.map(item => {
+    //     item.order -= 1
+    //     return item
+    //   })
+    // }
+    log('_saveItemOrder:', this.itemOrder)
   }
 
   _removeDisappearedChildren = (items) => {
-    log('_removeDisappearedChildren')
+    // log('_removeDisappearedChildren')
     let deleteBlockIndices = []
     _.cloneDeep(this.itemOrder).forEach((item, index) => {
       if (!_.findKey(items, (oldItem) => oldItem.key === item.key)) {
@@ -537,25 +553,35 @@ class DragableGrid extends Component {
       }
     })
     if (deleteBlockIndices.length > 0) {
-      this.deleteBlocks(deleteBlockIndices)
+      this.deleteBlocks(deleteBlockIndices, false)
     }
   }
 
-  deleteBlocks = (deleteBlockIndices) => {
+  deleteBlocks = (deleteBlockIndices, origin = true) => {
     let blockPositions = this.state.blockPositions
     let blockPositionsSetCount = this.state.blockPositionsSetCount
-    log('deleteBlocks blockPositionsSetCount:' + blockPositionsSetCount)
+    // log('deleteBlocks blockPositionsSetCount:' + blockPositionsSetCount)
     _.sortBy(deleteBlockIndices, index => -index).forEach(index => {
       --blockPositionsSetCount
-      log('soryBy:' + index + ' blockPositionsSetCount:' + blockPositionsSetCount)
+      // log('soryBy:' + index + ' blockPositionsSetCount:' + blockPositionsSetCount)
       let order = this.itemOrder[index].order
       blockPositions.splice(index, 1)
       this._fixItemOrderOnDeletion(this.itemOrder[index])
       this.itemOrder.splice(index, 1)
       this.items.splice(index, 1)
+      log('index:' + index + ' itemOrder:' + JSON.stringify(this.itemOrder))
+      if (origin) {
+        this.itemOrder = this.itemOrder.map(item => {
+          if (item.originIndex > index) {
+            item.originIndex -= 1
+          }
+          return item
+        })
+        log('itemOrder:originIndex:', this.itemOrder)
+      }
     })
 
-    log('blockPositionsSetCount:' + blockPositionsSetCount)
+    log('blockPositionsSetCount:', this.itemOrder)
     this.setState({ blockPositions, blockPositionsSetCount }, () => {
       this.items.forEach((item, order) => {
         let blockIndex = _.findIndex(this.itemOrder, item => item.order === order)
@@ -569,7 +595,7 @@ class DragableGrid extends Component {
   }
 
   _fixItemOrderOnDeletion = (orderItem) => {
-    log('_fixItemOrderOnDeletion')
+    // log('_fixItemOrderOnDeletion')
     if (!orderItem) return false
     orderItem.order--
     this._fixItemOrderOnDeletion(_.find(this.itemOrder, item => item.order === orderItem.order + 2))
@@ -598,7 +624,7 @@ class DragableGrid extends Component {
   }
 
   _defaultDragActivationWiggle = () => {
-    log('_defaultDragActivationWiggle')
+    // log('_defaultDragActivationWiggle')
     if (!this.dragStartAnimation) {
       switch (this.defaultAnimation) {
         case DRAG_ANIMATION.WIGGLE:
@@ -634,7 +660,7 @@ class DragableGrid extends Component {
   }
 
   _blockActivationWiggle = () => {
-    log("_blockActivationWiggle")
+    // log("_blockActivationWiggle")
     if (this.dragStartAnimation) {
       return this.dragStartAnimation
     }
