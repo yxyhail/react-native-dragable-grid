@@ -1,16 +1,16 @@
 import React from 'react'
-import { Animated, Text, Platform, View, Dimensions, Image } from 'react-native'
+import { Animated, Text, SafeAreaView, Platform, View, Dimensions, Image } from 'react-native'
 
 const { width: screenW, height: screenH } = Dimensions.get('window');
 // iPhoneX
-const X_WIDTH = 375;
-const X_HEIGHT = 812;
+const X_WIDTH = [375, 414];
+const X_HEIGHT = [812, 896];
 const saveHeight = 24
 const contentHeight = 50
 
 const isX = Platform.OS === 'ios' &&
-  ((screenH === X_HEIGHT && screenW === X_WIDTH) ||
-    (screenH === X_WIDTH && screenW === X_HEIGHT))
+  ((X_HEIGHT.indexOf(screenH) > -1 && X_WIDTH.indexOf(screenW) > -1) ||
+    (X_HEIGHT.indexOf(screenW) > -1 && X_WIDTH.indexOf(screenH) > -1))
 
 const height = contentHeight + (isX ? saveHeight : 0)
 
