@@ -12,7 +12,8 @@ import {
 
 import _ from 'lodash'
 import AnimateBottom from './AnimateBottom';
-import RootSiblingsManager from 'react-native-root-siblings';
+import RootSiblingsManager, { RootSiblingParent } from 'react-native-root-siblings';
+
 
 const { width, height: screenH } = Dimensions.get('window');
 // const { width: screenW, height: screenH } = Dimensions.get('screen');
@@ -836,7 +837,8 @@ class DragableGrid extends Component {
       needScrool = true,
       rootStyle = {}
     } = this.props
-    const RootView = needScrool ? ScrollView : View
+    // const RootView = needScrool ? ScrollView : View
+    const RootView = RootSiblingParent
     return (
       <RootView
         style={[rootStyle]}
